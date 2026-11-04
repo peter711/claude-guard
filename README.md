@@ -65,7 +65,13 @@ The hook handles direct paths/references for `Bash`, `PowerShell`, `Read`, `Writ
 
 Malformed hook input or script/runtime failures **fail closed** on recent Claude Code versions that support `onFailure: "block"`.
 
-The script does not log tool inputs or secret contents. You can adjust lists and patterns in `plugins/claude-guard/scripts/guard.py`, then run tests and release an updated plugin version.
+The script does not log tool inputs or secret contents. `guard.py` is a thin entrypoint; the rules live in the `plugins/claude-guard/scripts/claude_guard/` package:
+
+- `sensitive_paths.py` — secret file/directory patterns (`SECRET_PATTERNS`) and allowed dotenv templates
+- `commands.py` — destructive shell command rules (`COMMAND_RULES`)
+- `policy.py` — maps each tool to its checks (`SHELL_TOOLS`, `PATH_FIELD_BY_TOOL`)
+
+Adjust those, then run tests and release an updated plugin version. If you add a tool, also add it to the `matcher` in `hooks.json`.
 
 ## Local tests
 
