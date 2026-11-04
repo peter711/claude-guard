@@ -1,0 +1,7 @@
+{
+  "name": "claude-guard",
+  "version": "0.1.0",
+  "description": "PreToolUse security checks for secrets and risky shell commands",
+  "license": "MIT",
+  "keywords": ["security", "hooks", "secrets", "guardrails"]
+}

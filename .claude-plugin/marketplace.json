@@ -1,0 +1,12 @@
+{
+  "name": "claude-guard-marketplace",
+  "description": "Security guardrails for Claude Code",
+  "owner": { "name": "Claude Guard Contributors" },
+  "plugins": [
+    {
+      "name": "claude-guard",
+      "source": "./plugins/claude-guard",
+      "description": "Block direct access to secrets and risky shell commands before execution"
+    }
+  ]
+}
