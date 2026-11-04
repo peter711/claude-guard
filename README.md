@@ -12,21 +12,21 @@ Installable [Claude Code](https://code.claude.com/docs/en/plugins) `PreToolUse` 
 
 ## Install from GitHub
 
-1. Publish this entire folder as a GitHub repository named `claude-guard`.
-2. Replace `YOUR_GITHUB_USERNAME` in these commands with your account or organization.
-3. In the **Claude Code interactive prompt** (not a normal shell), run:
+1. In the **Claude Code interactive prompt** (not a normal shell), run:
 
 ```text
-/plugin marketplace add YOUR_GITHUB_USERNAME/claude-guard
+/plugin marketplace add peter711/claude-guard
 /plugin install claude-guard@claude-guard-marketplace
 ```
+
+> `/plugin install` takes `plugin@marketplace` (here `claude-guard@claude-guard-marketplace`), not the GitHub `user/repo` used by `marketplace add`.
 
 Install at user scope for every local project, or select project scope in the plugin UI. Restart Claude Code (or reload plugins if available), then run `/hooks` to verify the installed `PreToolUse` hook appears.
 
 From your terminal, the equivalent is:
 
 ```bash
-claude plugin marketplace add YOUR_GITHUB_USERNAME/claude-guard
+claude plugin marketplace add peter711/claude-guard
 claude plugin install claude-guard@claude-guard-marketplace
 ```
 
@@ -94,7 +94,7 @@ git init
 git add .
 git commit -m "Initial release of Claude Guard"
 git branch -M main
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/claude-guard.git
+git remote add origin https://github.com/peter711/claude-guard.git
 git push -u origin main
 ```
 
