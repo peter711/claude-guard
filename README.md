@@ -1,128 +1,60 @@
 # Claude Guard
 
-Installable [Claude Code](https://code.claude.com/docs/en/plugins) `PreToolUse` security hook, distributed as a GitHub plugin marketplace.
+[Claude Code](https://code.claude.com/docs/en/plugins) `PreToolUse` hook that blocks direct access to secrets and a few risky shell commands before they run.
 
-> **Scope:** best-effort protection against accidental/direct secret reads and a few high-risk commands. Not a complete security boundary, malware scanner, or guarantee against deliberate exfiltration.
+> **Scope:** best-effort protection against accidental secret reads and high-risk commands. Not a security boundary.
 
 ## Requirements
 
-- Claude Code **v2.1.295+** (for `onFailure: "block"`; newer releases recommended)
-- `python3` on your `PATH` (Python 3.10+)
-- Local CLI / supported local Claude Code environment with plugin hooks enabled
+- Claude Code **v2.1.295+**
+- `python3` 3.10+ on your `PATH`
 
-## Install from GitHub
+## Install
 
-1. In the **Claude Code interactive prompt** (not a normal shell), run:
+In Claude Code:
 
 ```text
 /plugin marketplace add peter711/claude-guard
 /plugin install claude-guard@claude-guard-marketplace
 ```
 
-> `/plugin install` takes `plugin@marketplace` (here `claude-guard@claude-guard-marketplace`), not the GitHub `user/repo` used by `marketplace add`.
+Reload plugins, then run `/hooks` to confirm the `PreToolUse` hook is listed.
 
-Install at user scope for every local project, or select project scope in the plugin UI. Restart Claude Code (or reload plugins if available), then run `/hooks` to verify the installed `PreToolUse` hook appears.
-
-From your terminal, the equivalent is:
-
-```bash
-claude plugin marketplace add peter711/claude-guard
-claude plugin install claude-guard@claude-guard-marketplace
-```
-
-You can also load this plugin locally without publishing:
-
-```bash
-claude --plugin-dir ./plugins/claude-guard
-```
-
-> If you use an organization-managed Claude Code instance, your administrator may need to allow third-party marketplaces/plugins.
-
-## What gets blocked?
-
-| Example tool call | Default |
-|---|---|
-| `Bash: cat .env` | DENY |
-| `Bash: head api/.env.production` | DENY |
-| `Bash: cat ~/.ssh/id_ed25519` | DENY |
-| `Bash: cat ~/.aws/credentials` | DENY |
-| `Read: /work/.env.local` | DENY |
-| `Grep: path=/work/.env, pattern=API_KEY` | DENY |
-| `Bash: rm -rf build` | DENY |
-| `Bash: sudo ...` | DENY |
-| `Bash: git push --force origin main` | DENY |
-| `Bash: cat .env.example` | ALLOW (normal Claude permissions still apply) |
-| `Bash: git status`, `python3 -m unittest` | ALLOW (normal permissions apply) |
-
-The hook handles direct paths/references for `Bash`, `PowerShell`, `Read`, `Write`, `Edit`, `NotebookEdit`, `Grep`, and `Glob`. It also blocks direct references to `.npmrc`, `.pypirc`, `.netrc`, SSH private keys, `.aws/credentials`, `.kube/config`, GitHub CLI token config, common credential files, and `.pem/.p12/.pfx` files. It permits `.env.example`, `.env.sample`, `.env.template`, and `.env.dist`.
-
-## How it works
-
-`plugins/claude-guard/hooks/hooks.json` registers `PreToolUse`, with `onFailure: "block"`. Claude Code invokes `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/guard.py` before each matched tool call. The hook parses input JSON from stdin and exits:
-
-- `0` to continue through the normal Claude Code permission flow
-- `2` to deny and show a short reason on stderr
-
-Malformed hook input or script/runtime failures **fail closed** on recent Claude Code versions that support `onFailure: "block"`.
-
-The script does not log tool inputs or secret contents. `guard.py` is a thin entrypoint; the rules live in the `plugins/claude-guard/scripts/claude_guard/` package:
-
-- `sensitive_paths.py` — secret file/directory patterns (`SECRET_PATTERNS`) and allowed dotenv templates
-- `commands.py` — destructive shell command rules (`COMMAND_RULES`)
-- `policy.py` — maps each tool to its checks (`SHELL_TOOLS`, `PATH_FIELD_BY_TOOL`)
-
-Adjust those, then run tests and release an updated plugin version. If you add a tool, also add it to the `matcher` in `hooks.json`.
-
-## Local tests
-
-```bash
-python3 -m unittest discover -s tests -v
-claude plugin validate ./plugins/claude-guard
-claude plugin validate .
-```
-
-The `claude plugin validate` commands require Claude Code to be installed. Tests do not execute the shell commands being inspected.
-
-Manually verify with a test project that **contains no real secrets**: ask Claude Code to run `cat .env`; the guard should reject the tool call before execution. Check `/hooks` if it does not.
-
-## Publish to GitHub
-
-Create an empty repo named `claude-guard` under your account, then run from this directory:
-
-```bash
-git init
-git add .
-git commit -m "Initial release of Claude Guard"
-git branch -M main
-git remote add origin https://github.com/peter711/claude-guard.git
-git push -u origin main
-```
-
-Do not commit real `.env` files, keys, tokens, or local secrets. Check the staged diff before publishing.
-
-## Update / uninstall
-
-In Claude Code, use `/plugin` to manage installed plugins and marketplaces. In a terminal:
+To update or remove:
 
 ```bash
 claude plugin marketplace update claude-guard-marketplace
 claude plugin uninstall claude-guard@claude-guard-marketplace
 ```
 
-## Limitations / threat model
+## What gets blocked
 
-- **Not a security boundary.** This only inspects the immediate input of matched Claude Code tools, using conservative text/path patterns. A shell can construct paths dynamically, execute other programs, use indirect file reads, or retrieve secrets from process environment variables. These can bypass this hook.
-- It doesn't intercept arbitrary MCP/custom tools, network services, or access by other processes. A broad `Grep` or a script can read sensitive files indirectly.
-- Pattern matching can block harmless commands mentioning `.env` or similar names; this is intentional for a simple conservative first version.
-- Installed plugins can be disabled, changed, or superseded by environment/managed policy settings. An agent with access to the hook's source/config or the machine itself can potentially weaken its protection.
-- For stronger guarantees: don't expose secrets to the agent's runtime. Restrict secret file access at the OS/container level, enable [Claude Code sandboxing](https://code.claude.com/docs/en/sandboxing), use deny permissions and managed policy, restrict network access, and isolate sensitive credentials.
-- Review plugin source before installation; do not install untrusted GitHub plugins.
+| Example | Result |
+|---|---|
+| `cat .env`, `Read: .env.local`, `Grep` on `.env` | Deny |
+| `cat ~/.ssh/id_ed25519`, `cat ~/.aws/credentials` | Deny |
+| `rm -rf build`, `sudo ...`, `git push --force` | Deny |
+| `cat .env.example`, `git status` | Allow (normal permissions apply) |
 
-## Official docs
+Also blocked: `.npmrc`, `.pypirc`, `.netrc`, `.kube/config`, GitHub CLI tokens, and `.pem`/`.p12`/`.pfx` files. Allowed templates: `.env.example`, `.env.sample`, `.env.template`, `.env.dist`.
 
-- [Hooks reference](https://code.claude.com/docs/en/hooks)
-- [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
-- [Permissions](https://code.claude.com/docs/en/permissions)
+The hook covers `Bash`, `PowerShell`, `Read`, `Write`, `Edit`, `NotebookEdit`, `Grep`, and `Glob`. It never logs tool inputs, and fails closed on malformed input or runtime errors.
+
+## Limitations
+
+- A shell can build paths dynamically, run other programs, or read secrets from environment variables, which bypasses this hook.
+- MCP and custom tools are not inspected.
+- Pattern matching may block harmless commands that mention `.env`.
+- For stronger guarantees, use [sandboxing](https://code.claude.com/docs/en/sandboxing), deny permissions, and keep secrets out of the agent's environment.
+
+## Development
+
+```bash
+python3 -m unittest discover -s tests -v
+claude plugin validate .
+```
+
+Rules live in `plugins/claude-guard/scripts/claude_guard/` (`sensitive_paths.py`, `commands.py`, `policy.py`). New tools also need adding to the `matcher` in `hooks.json`.
 
 ## License
 
