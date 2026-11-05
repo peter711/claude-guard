@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-05
+
+### Changed
+
+- **BREAKING:** plugin renamed from `claude-guard` to `agent-guard`, because third-party plugin names starting with `claude-` are reserved. The marketplace name (`claude-guard-marketplace`), GitHub repository and plugin directory are unchanged. Existing users must uninstall the old plugin and install the new one:
+
+  ```bash
+  claude plugin uninstall claude-guard@claude-guard-marketplace
+  claude plugin marketplace update claude-guard-marketplace
+  claude plugin install agent-guard@claude-guard-marketplace
+  ```
+
 ## [0.3.0] - 2026-11-05
 
 ### Added

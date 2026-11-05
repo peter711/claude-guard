@@ -15,7 +15,7 @@ In Claude Code:
 
 ```text
 /plugin marketplace add peter711/claude-guard
-/plugin install claude-guard@claude-guard-marketplace
+/plugin install agent-guard@claude-guard-marketplace
 ```
 
 Reload plugins, then run `/hooks` to confirm the `PreToolUse` hook is listed.
@@ -24,8 +24,10 @@ To update or remove:
 
 ```bash
 claude plugin marketplace update claude-guard-marketplace
-claude plugin uninstall claude-guard@claude-guard-marketplace
+claude plugin uninstall agent-guard@claude-guard-marketplace
 ```
+
+> **Upgrading from 0.3.x:** the plugin was renamed from `claude-guard` to `agent-guard` (names starting with `claude-` are reserved). Run `claude plugin uninstall claude-guard@claude-guard-marketplace`, then install `agent-guard` as above.
 
 ## What gets blocked
 

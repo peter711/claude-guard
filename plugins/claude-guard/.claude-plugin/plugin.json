@@ -1,6 +1,6 @@
 {
-  "name": "claude-guard",
-  "version": "0.3.0",
+  "name": "agent-guard",
+  "version": "0.4.0",
   "description": "PreToolUse security checks for secrets and risky shell commands",
   "license": "MIT",
   "keywords": ["security", "hooks", "secrets", "guardrails"]

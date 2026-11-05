@@ -165,7 +165,8 @@ class ClaudeGuardTest(unittest.TestCase):
         manifest = json.loads((plugin / ".claude-plugin" / "plugin.json").read_text())
         hooks = json.loads((plugin / "hooks" / "hooks.json").read_text())
         self.assertEqual(marketplace["name"], "claude-guard-marketplace")
-        self.assertEqual(manifest["name"], "claude-guard")
+        self.assertEqual(manifest["name"], "agent-guard")
+        self.assertEqual(marketplace["plugins"][0]["name"], manifest["name"])
         handler = hooks["hooks"]["PreToolUse"][0]["hooks"][0]
         self.assertEqual(handler["onFailure"], "block")
         self.assertEqual(handler["command"], "python3")
