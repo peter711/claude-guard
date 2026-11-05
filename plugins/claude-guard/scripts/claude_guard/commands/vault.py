@@ -6,7 +6,7 @@ import re
 from typing import Callable
 
 VAULT_CREDENTIAL_READ_RE = re.compile(
-    r"(?<![\w/])vault\s+(?:(?:read|write)\b[^\n;&|]*/(?:creds|sts)/|print\s+token\b)",
+    r"(?<![\w/])vault\s+(?:(?:read|write)\b[^\n;&|]*/(?:static-)?(?:creds|sts)/|print\s+token\b)",
     re.IGNORECASE,
 )
 

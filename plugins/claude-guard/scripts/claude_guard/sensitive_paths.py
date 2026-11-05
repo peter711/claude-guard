@@ -18,13 +18,16 @@ SECRET_DIRECTORY_RE = re.compile(
     r"(?<![A-Za-z0-9._-])(?:\.ssh(?:[/\\]|$)|"
     r"\.aws[/\\](?:credentials|config)\b|"
     r"\.aws[/\\](?:cli|sso)[/\\]cache\b|\.kube[/\\]config\b|"
-    r"\.config[/\\]gh[/\\]hosts\.yml\b)",
+    r"\.config[/\\]gh[/\\]hosts\.yml\b|"
+    r"\.azure[/\\](?:config(?![A-Za-z0-9._-])|msal_token_cache|msal_http_cache|service_principal_entries|accessTokens)\b|"
+    r"\.azure[/\\](?:TokenCache\.dat|msal\.cache|msalcache)\b)",
     re.IGNORECASE,
 )
 SECRET_FILE_RE = re.compile(
     r"(?<![A-Za-z0-9._-])(?:\.npmrc|\.pypirc|\.netrc|\.vault-token|"
     r"id_rsa|id_ed25519|id_ecdsa|"
     r"credentials\.json|service-account\.json|"
+    r"msal_token_cache\.(?:json|bin)|service_principal_entries\.json|accessTokens\.json|"
     r"(?:[^/\\\s\"']+\.(?:pem|p12|pfx)))(?![A-Za-z0-9._-])",
     re.IGNORECASE,
 )

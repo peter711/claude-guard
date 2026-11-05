@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-05
+
+### Added
+
+- Deny rules for destructive Azure CLI commands (`delete`/`purge`/`remove` verbs, role assignment and definition changes, credential resets, Key Vault access policies, complete-mode deployments, `az stack ... --action-on-unmanage delete*`, `az rest --method delete`).
+- Deny rules for destructive Azure PowerShell commands (`Remove-Az*` except local context cmdlets, role assignments, complete-mode deployments, `Invoke-AzRestMethod -Method Delete`).
+- Deny rules for Azure secret reads in `az` and PowerShell (Key Vault secrets and keys, access tokens, storage/Cosmos DB/Service Bus/Redis and similar keys, connection strings, publishing credentials, app settings, SAS tokens, `aks get-credentials --admin`).
+- Deny rule for echoing `AZURE_*` and `ARM_*` secret environment variables (`printenv`, `echo`, `$env:`, `Get-ChildItem Env:`).
+- New sensitive paths under `.azure`: `config` (but not `config.json`), MSAL token and HTTP caches, `service_principal_entries.json`, `accessTokens.json`, and Az PowerShell token caches.
+
+### Changed
+
+- Vault credential rule also matches `static-creds/` (for example `vault read azure/static-creds/<role>`).
+- New `azure` module under `claude_guard/commands/`, registered between `aws` and `vault`.
+
 ## [0.4.0] - 2026-11-05
 
 ### Added
