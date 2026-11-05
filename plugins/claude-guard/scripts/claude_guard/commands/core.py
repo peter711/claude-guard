@@ -1,7 +1,4 @@
-"""Best-effort detection of destructive shell commands.
-
-This deliberately errs on the side of blocking.
-"""
+"""Core shell rules: privilege escalation, force push, recursive deletion."""
 
 from __future__ import annotations
 
@@ -41,18 +38,9 @@ def _is_recursive_forced_rm(command: str) -> bool:
     return False
 
 
-# Checked in order; the first matching rule determines the reported reason.
-COMMAND_RULES: tuple[tuple[Callable[[str], object], str], ...] = (
+RULES: tuple[tuple[Callable[[str], object], str], ...] = (
     (POWERSHELL_DELETE_RE.search, "recursive forced PowerShell deletion"),
     (SUDO_RE.search, "sudo command"),
     (FORCE_PUSH_RE.search, "forced git push"),
     (_is_recursive_forced_rm, "recursive forced deletion"),
 )
-
-
-def destructive_command(command: str) -> str | None:
-    """Return a reason if the command looks destructive, else None."""
-    for matches, reason in COMMAND_RULES:
-        if matches(command):
-            return reason
-    return None

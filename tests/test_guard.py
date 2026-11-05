@@ -27,6 +27,10 @@ class ClaudeGuardTest(unittest.TestCase):
             event("Bash", command="cat ~/.ssh/id_ed25519"),
             event("Bash", command="cat ~/.aws/credentials"),
             event("Bash", command="cat ~/.npmrc"),
+            event("Bash", command="cat ~/.vault-token"),
+            event("Bash", command="cat ~/.aws/config"),
+            event("Bash", command="ls ~/.aws/sso/cache"),
+            event("Bash", command="cat ~/.aws/cli/cache/abc.json"),
             event("Bash", command="cat certs/private.pem"),
             event("Read", file_path="/work/.env.local"),
             event("Read", file_path=r"C:\project\.env"),
@@ -54,6 +58,62 @@ class ClaudeGuardTest(unittest.TestCase):
         for command in commands:
             with self.subTest(command=command):
                 self.assertIsNotNone(GUARD.check_event(event("Bash", command=command)))
+
+    def test_blocks_aws_and_vault_commands(self):
+        commands = [
+            "aws ec2 terminate-instances --instance-ids i-0123456789abcdef0",
+            "aws --profile dev s3api delete-object --bucket b --key k",
+            "aws iam create-access-key --user-name alice",
+            "aws iam put-role-policy --role-name r --policy-name p",
+            "aws iam attach-user-policy --user-name u --policy-arn arn:aws:iam::aws:policy/X",
+            "aws iam detach-role-policy --role-name r --policy-arn x",
+            "aws s3 rm s3://bucket/key",
+            "aws s3 rb s3://bucket --force",
+            "aws s3 sync ./dist s3://bucket --delete",
+            "aws configure get aws_secret_access_key",
+            "aws configure get aws_session_token --profile dev",
+            "aws secretsmanager get-secret-value --secret-id demo",
+            "aws ssm get-parameter --name /demo/x --with-decryption",
+            "aws ssm get-parameters-by-path --path /demo --with-decryption",
+            "aws kms decrypt --ciphertext-blob fileb://blob",
+            "aws sts get-session-token",
+            "aws sts get-federation-token --name demo",
+            "printenv AWS_SECRET_ACCESS_KEY",
+            'echo "$AWS_SESSION_TOKEN"',
+            "env | grep AWS_ACCESS_KEY_ID",
+            "export -p | grep AWS_SECRET_ACCESS_KEY",
+            "vault read aws/creds/my-role",
+            "vault write aws/sts/my-role ttl=1h",
+            "vault print token",
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertIsNotNone(GUARD.check_event(event("Bash", command=command)))
+
+    def test_allows_read_only_aws_and_vault_commands(self):
+        commands = [
+            "aws ec2 describe-instances",
+            "aws s3api list-buckets",
+            "aws iam get-role --role-name r",
+            "aws logs tail /aws/lambda/demo --follow",
+            "aws logs filter-log-events --log-group-name demo",
+            "aws sqs get-queue-attributes --queue-url https://example.test/q",
+            "aws sts get-caller-identity",
+            "aws s3 ls s3://bucket",
+            "aws s3 cp s3://bucket/key ./key",
+            "aws s3 mv ./a s3://bucket/a",
+            "aws s3 sync ./dist s3://bucket",
+            "aws configure get region",
+            "aws ssm get-parameter --name /demo/x",
+            "aws --profile dev ec2 describe-instances",
+            "echo $HOME",
+            "printenv PATH",
+            "vault read secret/data/demo",
+            "vault status",
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertIsNone(GUARD.check_event(event("Bash", command=command)))
 
     def test_allows_common_workflows(self):
         allowed = [
@@ -105,10 +165,21 @@ class ClaudeGuardTest(unittest.TestCase):
         manifest = json.loads((plugin / ".claude-plugin" / "plugin.json").read_text())
         hooks = json.loads((plugin / "hooks" / "hooks.json").read_text())
         self.assertEqual(marketplace["name"], "claude-guard-marketplace")
-        self.assertEqual(manifest["name"], "claude-guard")
+        self.assertEqual(manifest["name"], "agent-guard")
+        self.assertEqual(marketplace["plugins"][0]["name"], manifest["name"])
         handler = hooks["hooks"]["PreToolUse"][0]["hooks"][0]
         self.assertEqual(handler["onFailure"], "block")
         self.assertEqual(handler["command"], "python3")
+
+    def test_domain_modules_preserve_rule_order(self):
+        sys.path.insert(0, str(SCRIPT.parent))
+        try:
+            from claude_guard.commands import COMMAND_RULES, aws, core, vault
+        finally:
+            sys.path.pop(0)
+        self.assertEqual(
+            COMMAND_RULES, (*core.RULES, *aws.RULES, *vault.RULES))
+        self.assertEqual(len(COMMAND_RULES), 8)
 
 
 if __name__ == "__main__":

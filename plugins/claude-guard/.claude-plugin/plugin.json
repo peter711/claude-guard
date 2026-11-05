@@ -1,7 +1,8 @@
 {
-  "name": "claude-guard",
-  "version": "0.2.0",
+  "name": "agent-guard",
+  "version": "0.4.0",
   "description": "PreToolUse security checks for secrets and risky shell commands",
+  "author": { "name": "Peter711", "url": "https://github.com/peter711" },
   "license": "MIT",
   "keywords": ["security", "hooks", "secrets", "guardrails"]
 }

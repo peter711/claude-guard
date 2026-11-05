@@ -4,7 +4,7 @@
   "owner": { "name": "Claude Guard Contributors" },
   "plugins": [
     {
-      "name": "claude-guard",
+      "name": "agent-guard",
       "source": "./plugins/claude-guard",
       "description": "Block direct access to secrets and risky shell commands before execution"
     }
