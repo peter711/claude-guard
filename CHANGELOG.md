@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-05
+
+### Added
+
+- Deny rule for whole-environment dumps (`env`, `printenv`, `export`/`export -p`, bare `set`, `declare`/`typeset -p`/`-x`, `ps eww`/`ps e`, PowerShell `Env:` listings and `GetEnvironmentVariables()`), including one level of `bash -c`.
+- `printenv` of secret-looking variable names is denied; `printenv HOME` and `printenv PATH` stay allowed.
+- `/proc/<pid>/environ` is a sensitive path, blocked for `Read` and `Grep` as well as shell commands.
+
+### Changed
+
+- New `environment` rule module, registered last so specific AWS, Azure and Vault reasons win.
+
 ## [0.5.0] - 2026-11-05
 
 ### Added

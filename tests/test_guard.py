@@ -387,6 +387,74 @@ class ClaudeGuardTest(unittest.TestCase):
             with self.subTest(call=call):
                 self.assertIsNone(GUARD.check_event(call))
 
+    def test_blocks_environment_dumps(self):
+        commands = [
+            "env", "env | sort", "env | grep -i token", "env -0", "env > /tmp/x",
+            "printenv", "printenv -0", "printenv | grep -i key",
+            "printenv GITHUB_TOKEN", "printenv OPENAI_API_KEY", "printenv HOME GH_TOKEN",
+            "printenv MY_PAT", "printenv db_password",
+            "export", "export -p", "export -p | grep KEY",
+            "set", "set | grep -i secret", "echo foo; set", "cd x && env",
+            "declare", "typeset", "declare -p", "declare -x", "declare -px", "typeset -x",
+            "FOO=1 env", "/usr/bin/env", "command env", "$(env)", "echo `printenv`", "(env)",
+            "if env | grep -q X; then echo y; fi",
+            "ps eww", "ps e", "ps auxe", "ps aux -e", "ps eww -p 1234",
+            "bash -c env", "bash -c 'env'", 'sh -c "printenv | grep KEY"',
+            "bash -lc 'set | head'", "zsh -c 'export -p'", "/bin/bash -c 'env'",
+            "cat /proc/self/environ", "cat /proc/1/environ", "cat /proc/1234/environ",
+            "cat /proc/*/environ", "tr '\\0' '\\n' < /proc/self/environ",
+            "cat /proc/self/task/1/environ",
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertIsNotNone(GUARD.check_event(event("Bash", command=command)))
+        powershell = [
+            "Get-ChildItem Env:", "gci env:", "dir env:", "ls env:", "Get-Item Env:*",
+            "Get-ChildItem -Path Env:", "gci Env:\\",
+            "[Environment]::GetEnvironmentVariables()",
+            "[System.Environment]::GetEnvironmentVariables()",
+        ]
+        for command in powershell:
+            with self.subTest(tool="PowerShell", command=command):
+                self.assertIsNotNone(GUARD.check_event(event("PowerShell", command=command)))
+        for path in ("/proc/self/environ", "/proc/1/environ"):
+            for call in (event("Read", file_path=path), event("Grep", path=path, pattern="x")):
+                with self.subTest(call=call):
+                    self.assertIsNotNone(GUARD.check_event(call))
+
+    def test_allows_environment_lookalikes(self):
+        commands = [
+            "set -e", "set -euo pipefail", "set -x", "set +x", "set -o pipefail", "set -- a b",
+            "set -eu; echo hi", "bash -c 'set -e; make'",
+            "env VAR=x cmd", "env -i cmd", "env -u FOO cmd", "env FOO=1 true",
+            "env NODE_ENV=test npm test", "/usr/bin/env python3 script.py",
+            "printenv HOME", "printenv PATH", "printenv HOME PATH", "printenv LD_LIBRARY_PATH",
+            "printenv HOME > token.txt",
+            "echo $HOME", "echo env", "echo 'set'", "git commit -m 'fix env'", "git stash set",
+            "grep -r env src", "make environment", "printenv_helper.sh", "envsubst < t.yaml",
+            "export FOO=bar", "export PATH=$PATH:/x", "export FOO=bar; ls", "export -f foo",
+            "declare -f", "declare -F", "declare -A m", "declare -i n=1", "declare -r X=1",
+            "declare -x FOO=bar", "typeset -f foo",
+            "ps aux", "ps -ef", "ps -p 1", "ps aux | grep node", "docker ps",
+            "cat /proc/cpuinfo", "cat /proc/self/status", "ls /proc/self/fd", "cat /etc/environment",
+            "cat > run.sh <<'EOF'\n#!/usr/bin/env bash\nset -euo pipefail\nEOF",
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertIsNone(GUARD.check_event(event("Bash", command=command)))
+        powershell = [
+            "Get-ChildItem Env:PATH", "gci env:HOME", "ls -la env",
+            "[Environment]::GetEnvironmentVariable('PATH')",
+        ]
+        for command in powershell:
+            with self.subTest(tool="PowerShell", command=command):
+                self.assertIsNone(GUARD.check_event(event("PowerShell", command=command)))
+        for call in (event("Read", file_path="/proc/cpuinfo"),
+                     event("Read", file_path="/proc/self/status"),
+                     event("Read", file_path="/etc/environment")):
+            with self.subTest(call=call):
+                self.assertIsNone(GUARD.check_event(call))
+
     def test_allows_common_workflows(self):
         allowed = [
             event("Bash", command="pytest -q"),
@@ -446,12 +514,13 @@ class ClaudeGuardTest(unittest.TestCase):
     def test_domain_modules_preserve_rule_order(self):
         sys.path.insert(0, str(SCRIPT.parent))
         try:
-            from claude_guard.commands import COMMAND_RULES, aws, azure, core, vault
+            from claude_guard.commands import COMMAND_RULES, aws, azure, core, environment, vault
         finally:
             sys.path.pop(0)
         self.assertEqual(
-            COMMAND_RULES, (*core.RULES, *aws.RULES, *azure.RULES, *vault.RULES))
-        self.assertEqual(len(COMMAND_RULES), 13)
+            COMMAND_RULES,
+            (*core.RULES, *aws.RULES, *azure.RULES, *vault.RULES, *environment.RULES))
+        self.assertEqual(len(COMMAND_RULES), 14)
 
 
 if __name__ == "__main__":

@@ -31,11 +31,13 @@ SECRET_FILE_RE = re.compile(
     r"(?:[^/\\\s\"']+\.(?:pem|p12|pfx)))(?![A-Za-z0-9._-])",
     re.IGNORECASE,
 )
+PROC_ENVIRON_RE = re.compile(r"/proc/[^\s\"']+/environ(?![A-Za-z0-9._-])")
 
 # Checked in order after dotenv files; the first match determines the category.
 SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (SECRET_DIRECTORY_RE, "credential directory or configuration"),
     (SECRET_FILE_RE, "key or credential file"),
+    (PROC_ENVIRON_RE, "process environment file"),
 )
 
 
