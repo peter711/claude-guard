@@ -13,4 +13,4 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests -v
       - name: Check Python syntax
-        run: python -m py_compile plugins/claude-guard/scripts/guard.py plugins/claude-guard/scripts/claude_guard/*.py
+        run: python -m py_compile plugins/claude-guard/scripts/guard.py plugins/claude-guard/scripts/claude_guard/*.py plugins/claude-guard/scripts/claude_guard/commands/*.py

@@ -170,6 +170,16 @@ class ClaudeGuardTest(unittest.TestCase):
         self.assertEqual(handler["onFailure"], "block")
         self.assertEqual(handler["command"], "python3")
 
+    def test_domain_modules_preserve_rule_order(self):
+        sys.path.insert(0, str(SCRIPT.parent))
+        try:
+            from claude_guard.commands import COMMAND_RULES, aws, core, vault
+        finally:
+            sys.path.pop(0)
+        self.assertEqual(
+            COMMAND_RULES, (*core.RULES, *aws.RULES, *vault.RULES))
+        self.assertEqual(len(COMMAND_RULES), 8)
+
 
 if __name__ == "__main__":
     unittest.main()

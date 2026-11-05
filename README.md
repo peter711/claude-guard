@@ -57,7 +57,9 @@ python3 -m unittest discover -s tests -v
 claude plugin validate .
 ```
 
-Rules live in `plugins/claude-guard/scripts/claude_guard/` (`sensitive_paths.py`, `commands.py`, `policy.py`). New tools also need adding to the `matcher` in `hooks.json`.
+Rules live in `plugins/claude-guard/scripts/claude_guard/` (`sensitive_paths.py`, `policy.py`, and `commands/` split into `core.py`, `aws.py`, `vault.py`). New tools also need adding to the `matcher` in `hooks.json`.
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 
