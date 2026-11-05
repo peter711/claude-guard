@@ -1,7 +1,7 @@
 """Best-effort detection of destructive shell commands.
 
 This deliberately errs on the side of blocking. Rules live in per-domain
-modules (`core`, `aws`, `vault`); each exposes `RULES`, a tuple of
+modules (`core`, `aws`, `azure`, `vault`); each exposes `RULES`, a tuple of
 `(matcher, reason)` pairs.
 """
 
@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from typing import Callable
 
-from . import aws, core, vault
+from . import aws, azure, core, vault
 
 # Checked in order; the first matching rule determines the reported reason.
 COMMAND_RULES: tuple[tuple[Callable[[str], object], str], ...] = (
     *core.RULES,
     *aws.RULES,
+    *azure.RULES,
     *vault.RULES,
 )
 
