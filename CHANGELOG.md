@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2026-11-05
 
+### Added
+
+- Plugin author metadata in `plugin.json`.
+
 ### Changed
 
 - **BREAKING:** plugin renamed from `claude-guard` to `agent-guard`, because third-party plugin names starting with `claude-` are reserved. The marketplace name (`claude-guard-marketplace`), GitHub repository and plugin directory are unchanged. Existing users must uninstall the old plugin and install the new one:
