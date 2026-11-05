@@ -16,12 +16,13 @@ DOTENV_RE = re.compile(
 )
 SECRET_DIRECTORY_RE = re.compile(
     r"(?<![A-Za-z0-9._-])(?:\.ssh(?:[/\\]|$)|"
-    r"\.aws[/\\]credentials\b|\.kube[/\\]config\b|"
+    r"\.aws[/\\](?:credentials|config)\b|"
+    r"\.aws[/\\](?:cli|sso)[/\\]cache\b|\.kube[/\\]config\b|"
     r"\.config[/\\]gh[/\\]hosts\.yml\b)",
     re.IGNORECASE,
 )
 SECRET_FILE_RE = re.compile(
-    r"(?<![A-Za-z0-9._-])(?:\.npmrc|\.pypirc|\.netrc|"
+    r"(?<![A-Za-z0-9._-])(?:\.npmrc|\.pypirc|\.netrc|\.vault-token|"
     r"id_rsa|id_ed25519|id_ecdsa|"
     r"credentials\.json|service-account\.json|"
     r"(?:[^/\\\s\"']+\.(?:pem|p12|pfx)))(?![A-Za-z0-9._-])",

@@ -34,15 +34,18 @@ claude plugin uninstall claude-guard@claude-guard-marketplace
 | `cat .env`, `Read: .env.local`, `Grep` on `.env` | Deny |
 | `cat ~/.ssh/id_ed25519`, `cat ~/.aws/credentials` | Deny |
 | `rm -rf build`, `sudo ...`, `git push --force` | Deny |
-| `cat .env.example`, `git status` | Allow (normal permissions apply) |
+| `aws s3 rm ...`, `aws ec2 terminate-instances ...`, `aws iam create-access-key` | Deny |
+| `aws secretsmanager get-secret-value`, `printenv AWS_SECRET_ACCESS_KEY`, `vault read aws/creds/...` | Deny |
+| `cat .env.example`, `git status`, `aws ec2 describe-instances`, `aws s3 ls` | Allow (normal permissions apply) |
 
-Also blocked: `.npmrc`, `.pypirc`, `.netrc`, `.kube/config`, GitHub CLI tokens, and `.pem`/`.p12`/`.pfx` files. Allowed templates: `.env.example`, `.env.sample`, `.env.template`, `.env.dist`.
+Also blocked: `.npmrc`, `.pypirc`, `.netrc`, `.kube/config`, `.aws/config`, AWS CLI/SSO caches, `~/.vault-token`, GitHub CLI tokens, and `.pem`/`.p12`/`.pfx` files. Allowed templates: `.env.example`, `.env.sample`, `.env.template`, `.env.dist`.
 
 The hook covers `Bash`, `PowerShell`, `Read`, `Write`, `Edit`, `NotebookEdit`, `Grep`, and `Glob`. It never logs tool inputs, and fails closed on malformed input or runtime errors.
 
 ## Limitations
 
 - A shell can build paths dynamically, run other programs, or read secrets from environment variables, which bypasses this hook.
+- AWS and Vault rules match CLI verbs and are best-effort; boto3, `bash -c`, aliases, or other tools bypass them.
 - MCP and custom tools are not inspected.
 - Pattern matching may block harmless commands that mention `.env`.
 - For stronger guarantees, use [sandboxing](https://code.claude.com/docs/en/sandboxing), deny permissions, and keep secrets out of the agent's environment.
